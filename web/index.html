@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distributed Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Distributed Calculator</h1>
+    <div>
+        <input type="text" id="expression" placeholder="Enter expression">
+        <button onclick="addCalculation()">Calculate</button>
+    </div>
+    <h2>Expressions</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Expression</th>
+                <th>Status</th>
+                <th>Result</th>
+            </tr>
+        </thead>
+        <tbody id="expressionsTable">
+        </tbody>
+    </table>
+
+    <script>
+        async function addCalculation() {
+            const expression = document.getElementById('expression').value;
+            const response = await fetch('/api/v1/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ expression })
+            });
+            if (response.ok) {
+                alert('Expression added successfully!');
+                loadExpressions();
+            } else {
+                alert('Failed to add expression');
+            }
+        }
+
+        async function loadExpressions() {
+            const response = await fetch('/api/v1/expressions');
+            const data = await response.json();
+            const table = document.getElementById('expressionsTable');
+            table.innerHTML = '';
+            data.expressions.forEach(expr => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${expr.id}</td>
+                    <td>${expr.expression}</td>
+                    <td>${expr.status}</td>
+                    <td>${expr.result}</td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        loadExpressions();
+        setInterval(loadExpressions, 5000);
+    </script>
+</body>
+</html>

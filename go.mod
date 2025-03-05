@@ -1,0 +1,3 @@
+module GOCACL_DISTRIBUTED
+
+go 1.23.4
