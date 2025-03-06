@@ -1,25 +1,24 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"os"
 
-	"github.com/denis/repos/GOCACL_DISTRIBUTED/internal/orchestrator"
+	"github.com/denis-gr/GOCACL_DISTRIBUTED/internal/orchestrator"
 )
 
 func main() {
-	http.HandleFunc("/api/v1/calculate", orchestrator.StartCalculationHandler)
-	http.HandleFunc("/api/v1/expressions", orchestrator.GetExpressionsListHandler)
-	http.HandleFunc("/api/v1/expressions/", orchestrator.GetExpressionHandler)
-	http.HandleFunc("/internal/task", orchestrator.GetTaskHandler)
-	http.HandleFunc("/internal/task", orchestrator.SaveTaskResultHandler)
+	addr := os.Getenv("ADDR")
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	if addr == "" {
+		addr = ":8080"
 	}
 
-	log.Printf("Server listening on port %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	router := orchestrator.NewRouter()
+	fmt.Println("Starting server at", addr)
+	err := http.ListenAndServe(addr, router)
+	if err != nil {
+		fmt.Println("Error starting server:", err)
+	}
 }

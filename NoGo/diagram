@@ -1,0 +1,31 @@
+@startuml
+actor User
+
+participant "Web Interface" as Web
+participant "Orchestrator" as Orchestrator
+participant "Agent" as Agent
+
+User -> Web: Ввод арифметического выражения
+Web -> Orchestrator: POST /api/v1/calculate
+Orchestrator -> User: Возвращает ID выражения
+
+User -> Web: Запрос списка выражений
+Web -> Orchestrator: GET /api/v1/expressions
+Orchestrator -> Web: Возвращает список выражений
+Web -> User: Отображает список выражений
+
+User -> Web: Запрос выражения по ID
+Web -> Orchestrator: GET /api/v1/expressions/:id
+Orchestrator -> Web: Возвращает выражение
+Web -> User: Отображает выражение
+
+Agent -> Orchestrator: GET /internal/task
+Orchestrator -> Agent: Возвращает задачу
+
+Agent -> Orchestrator: POST /internal/task
+
+User -> Web: Запрос списка задач
+Web -> Orchestrator: GET /internal/tasks
+Orchestrator -> Web: Возвращает список задач
+Web -> User: Отображает список задач
+@enduml

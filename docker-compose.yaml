@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  orchestrator:
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: ./NoGo/docker/orchestrator.dockerfile  
+
+  agent:
+    deploy:
+      replicas: 3
+    env_file:
+      - .env
+    environment:
+      - TASK_URL=http://orchestrator:8080/internal/task
+    depends_on:
+      - orchestrator
+    build:
+      context: .
+      dockerfile: ./NoGo/docker/agent.dockerfile
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./NoGo/website:/usr/share/nginx/html
+      - ./NoGo/configs/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - orchestrator

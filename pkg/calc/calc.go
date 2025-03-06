@@ -82,10 +82,39 @@ func toRPN(expression []string) []string {
 	return answer
 }
 
-// Calc вычисляет значение выражения, заданного строкой.
+// Operations содержит функции для выполнения арифметических операций.
+type Operations struct {
+	PlusFunc     func(a, b float64) float64
+	MinusFunc    func(a, b float64) float64
+	MultiplyFunc func(a, b float64) float64
+	DivideFunc   func(a, b float64) float64
+}
+
+// NewOperationsDefault создает новый экземпляр Operations с функциями по умолчанию.
+func NewOperationsDefault() *Operations {
+	return &Operations{
+		PlusFunc: func(a, b float64) float64 {
+			return a + b
+		},
+		MinusFunc: func(a, b float64) float64 {
+			return a - b
+		},
+		MultiplyFunc: func(a, b float64) float64 {
+			return a * b
+		},
+		DivideFunc: func(a, b float64) float64 {
+			if b == 0 {
+				panic("деление на ноль")
+			}
+			return a / b
+		},
+	}
+}
+
+// Calc вычисляет значение выражения, заданного строкой, используя функции из Operations.
 // Возвращает результат вычисления или ошибку, если выражение некорректно.
 // Пример: "2+2*(3+3*(1+2))" -> 20, nil
-func Calc(expression string) (float64, error) {
+func (ops *Operations) Calc(expression string) (float64, error) {
 	rpn := toRPN(splitExpression(expression))
 	stack := make([]float64, 0, len(rpn))
 	tempResult := 0.0
@@ -103,16 +132,16 @@ func Calc(expression string) (float64, error) {
 
 			switch token {
 			case "+":
-				tempResult = a + b
+				tempResult = ops.PlusFunc(a, b)
 			case "-":
-				tempResult = a - b
+				tempResult = ops.MinusFunc(a, b)
 			case "*":
-				tempResult = a * b
+				tempResult = ops.MultiplyFunc(a, b)
 			case "/":
 				if b == 0 {
 					return 0, errors.New("деление на ноль")
 				}
-				tempResult = a / b
+				tempResult = ops.DivideFunc(a, b)
 			}
 			stack = append(stack, tempResult)
 		default:
@@ -129,4 +158,11 @@ func Calc(expression string) (float64, error) {
 	}
 
 	return stack[0], nil
+}
+
+// Calc вычисляет значение выражения, заданного строкой.
+// Возвращает результат вычисления или ошибку, если выражение некорректно.
+// Пример: "2+2*(3+3*(1+2))" -> 20, nil
+func Calc(expression string) (float64, error) {
+	return NewOperationsDefault().Calc(expression)
 }
