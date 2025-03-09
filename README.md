@@ -1,4 +1,5 @@
 # Very Tired Calculator  (GOCACL_DISTRIBUTED)
+![Coverage](https://img.shields.io/badge/Coverage-90.5%25-brightgreen)
 
 ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?logo=githubactions&logoColor=white&style=flat)
 ![Bootstrap](https://img.shields.io/badge/bootstrap-%238511FA.svg?logo=bootstrap&logoColor=white&style=flat)
