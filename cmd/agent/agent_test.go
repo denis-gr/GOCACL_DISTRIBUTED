@@ -13,12 +13,11 @@ func TestMain(t *testing.T) {
 
 	go main()
 
-	// Проверяем, что переменные окружения установлены правильно
 	if computingPower, err := strconv.Atoi(os.Getenv("COMPUTING_POWER")); err != nil || computingPower != 2 {
 		t.Errorf("Expected COMPUTING_POWER to be 2, got %d", computingPower)
 	}
-	if delay_ms, err := strconv.ParseInt(os.Getenv("DELAY_MS"), 10, 64); err != nil || delay_ms != 500 {
-		t.Errorf("Expected DELAY_MS to be 500, got %d", delay_ms)
+	if delayMs, err := strconv.ParseInt(os.Getenv("DELAY_MS"), 10, 64); err != nil || delayMs != 500 {
+		t.Errorf("Expected DELAY_MS to be 500, got %d", delayMs)
 	}
 	if url := os.Getenv("TASK_URL"); url != "http://localhost:8080/internal/task" {
 		t.Errorf("Expected TASK_URL to be 'http://localhost:8080/internal/task', got %s", url)

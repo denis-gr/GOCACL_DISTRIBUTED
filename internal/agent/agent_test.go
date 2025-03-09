@@ -1,3 +1,4 @@
+// Package agent содержит тесты для пакета agent.
 package agent
 
 import (
@@ -53,15 +54,15 @@ func TestPerformTask(t *testing.T) {
 		t.Errorf("expected 2, got %f", result.Result)
 	}
 
-	if duration > time.Duration(task.OperationTime)*time.Millisecond + 10*time.Millisecond {
+	if duration > time.Duration(task.OperationTime)*time.Millisecond+10*time.Millisecond {
 		t.Errorf("task took too long, expected less than %dms, got %dms", task.OperationTime, duration.Milliseconds())
 	}
 }
 
 func TestGetTask(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"task": {"ID": "1", "Operation": "+", "Arg1": 1, "Arg2": 1, "OperationTime": 100}}`))
+		_, _ = w.Write([]byte(`{"task": {"ID": "1", "Operation": "+", "Arg1": 1, "Arg2": 1, "OperationTime": 100}}`))
 	}))
 	defer server.Close()
 
@@ -81,8 +82,11 @@ func TestGetTask(t *testing.T) {
 	}
 
 	// Тесты с неверным JSON
-	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`invalid json`))
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, err := w.Write([]byte(`invalid json`))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -125,7 +129,7 @@ func TestSendResult(t *testing.T) {
 	}
 
 	// Тесты с ошибкой сервера
-	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer server.Close()
@@ -143,13 +147,16 @@ func TestSendResult(t *testing.T) {
 }
 
 func TestWorker(t *testing.T) {
-	taskServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	taskServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"task": {"ID": "1", "Operation": "+", "Arg1": 1, "Arg2": 1, "OperationTime": 100}}`))
+		_, err := w.Write([]byte(`{"task": {"ID": "1", "Operation": "+", "Arg1": 1, "Arg2": 1, "OperationTime": 100}}`))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer taskServer.Close()
 
-	resultServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	resultServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer resultServer.Close()
@@ -162,13 +169,16 @@ func TestWorker(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Тесты с нулевой задержкой
-	taskServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	taskServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"task": {"ID": "1", "Operation": "+", "Arg1": 1, "Arg2": 1, "OperationTime": 100}}`))
+		_, err := w.Write([]byte(`{"task": {"ID": "1", "Operation": "+", "Arg1": 1, "Arg2": 1, "OperationTime": 100}}`))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer taskServer.Close()
 
-	resultServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	resultServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer resultServer.Close()
@@ -177,13 +187,16 @@ func TestWorker(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Тесты с ненулевой задержкой
-	taskServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	taskServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"task": {"ID": "1", "Operation": "+", "Arg1": 1, "Arg2": 1, "OperationTime": 100}}`))
+		_, err := w.Write([]byte(`{"task": {"ID": "1", "Operation": "+", "Arg1": 1, "Arg2": 1, "OperationTime": 100}}`))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer taskServer.Close()
 
-	resultServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	resultServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer resultServer.Close()

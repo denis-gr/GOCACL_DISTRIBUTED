@@ -1,3 +1,4 @@
+// Package orchestrator содержит логику для распределенного вычислителя.
 package orchestrator
 
 import (
@@ -11,8 +12,10 @@ import (
 	"github.com/google/uuid"
 )
 
+// ErrNotFound используется для обозначения ошибки, когда элемент не найден.
 var ErrNotFound = errors.New("")
 
+// DistributedCalculator представляет распределенный вычислитель.
 type DistributedCalculator struct {
 	expressions map[string]Expression
 	tasks       map[string]Task
@@ -21,6 +24,7 @@ type DistributedCalculator struct {
 	mu          sync.Mutex
 }
 
+// NewDistributedCalculator создает новый экземпляр DistributedCalculator.
 func NewDistributedCalculator() *DistributedCalculator {
 	return &DistributedCalculator{
 		expressions: make(map[string]Expression),
@@ -62,10 +66,10 @@ func (f *DistributedCalculator) createNewTask(a, b float64, ops string) float64 
 	return result
 }
 
-func (f *DistributedCalculator) saveResult(expr_id string, res float64, err error) {
+func (f *DistributedCalculator) saveResult(exprID string, res float64, err error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	expr, exists := f.expressions[expr_id]
+	expr, exists := f.expressions[exprID]
 	if !exists {
 		return
 	}
@@ -75,7 +79,7 @@ func (f *DistributedCalculator) saveResult(expr_id string, res float64, err erro
 		expr.Status = "ok"
 		expr.Result = res
 	}
-	f.expressions[expr_id] = expr
+	f.expressions[exprID] = expr
 }
 
 // Calculate выполняет логику для обработки запроса на добавление вычисления арифметического выражения.
@@ -174,14 +178,14 @@ func (f *DistributedCalculator) GetTasks() (TaskFullResponse, error) {
 	defer f.mu.Unlock()
 	tasks := []TaskFull{}
 	for id, task := range f.tasks {
-		_, is_busy := f.taskBusy[id]
+		_, isBusy := f.taskBusy[id]
 		tasks = append(tasks, TaskFull{
 			ID:            task.ID,
 			Arg1:          task.Arg1,
 			Arg2:          task.Arg2,
 			Operation:     task.Operation,
 			OperationTime: task.OperationTime,
-			IsBusy:        is_busy,
+			IsBusy:        isBusy,
 		})
 	}
 	return TaskFullResponse{TasksFull: tasks}, nil

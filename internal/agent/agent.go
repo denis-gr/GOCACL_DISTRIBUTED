@@ -1,3 +1,4 @@
+// Package agent содержит реализацию агента для выполнения задач.
 package agent
 
 import (
@@ -11,9 +12,10 @@ import (
 	"github.com/denis-gr/GOCACL_DISTRIBUTED/internal/orchestrator"
 )
 
-func Worker(delay_ms int64, url string) {
+// Worker используется для обозначения ошибки, когда элемент не найден.
+func Worker(delayMs int64, url string) {
 	for {
-		nextRun := time.Now().Add(time.Duration(delay_ms) * time.Millisecond)
+		nextRun := time.Now().Add(time.Duration(delayMs) * time.Millisecond)
 		task := getTask(url)
 		if task != nil {
 			result := performTask(task)

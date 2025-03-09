@@ -1,3 +1,4 @@
+// Package orchestrator содержит реализацию сервера для распределенного вычислителя.
 package orchestrator
 
 import (
@@ -52,7 +53,7 @@ func calculateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // getExpressionsHandler обрабатывает запрос на получение списка выражений.
-func getExpressionsHandler(w http.ResponseWriter, r *http.Request) {
+func getExpressionsHandler(w http.ResponseWriter, _ *http.Request) {
 	res, _ := calculator.GetExpressions()
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(res)
@@ -78,7 +79,7 @@ func getExpressionByIDHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // getTaskHandler обрабатывает запрос на получение задачи для выполнения.
-func getTaskHandler(w http.ResponseWriter, r *http.Request) {
+func getTaskHandler(w http.ResponseWriter, _ *http.Request) {
 	res, err := calculator.GetTask()
 	if err == ErrNotFound {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -107,7 +108,7 @@ func postTaskResultHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // getTasksHandler обрабатывает запрос на получение всех задач (для демонстрации работы)
-func getTasksHandler(w http.ResponseWriter, r *http.Request) {
+func getTasksHandler(w http.ResponseWriter, _ *http.Request) {
 	res, _ := calculator.GetTasks()
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(res)

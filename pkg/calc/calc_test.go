@@ -1,3 +1,4 @@
+// Package calc содержит тесты для пакета calc.
 package calc
 
 import (

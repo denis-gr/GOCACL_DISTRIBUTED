@@ -1,3 +1,4 @@
+// Package main содержит тесты для сервера orchestrator.
 package main
 
 import (

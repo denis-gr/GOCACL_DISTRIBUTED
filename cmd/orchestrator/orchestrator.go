@@ -1,3 +1,4 @@
+// Package main содержит точку входа для сервера orchestrator.
 package main
 
 import (

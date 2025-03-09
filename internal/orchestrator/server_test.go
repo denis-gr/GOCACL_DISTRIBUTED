@@ -1,3 +1,4 @@
+// Package orchestrator содержит тесты для пакета orchestrator.
 package orchestrator
 
 import (
@@ -55,7 +56,10 @@ func TestGetExpressionByIDHandler(t *testing.T) {
 		rr := httptest.NewRecorder()
 		router.ServeHTTP(rr, req)
 		var createRes CalculateResponse
-		json.NewDecoder(rr.Body).Decode(&createRes)
+		err := json.NewDecoder(rr.Body).Decode(&createRes)
+		if err != nil {
+			t.Errorf("error decoding response: %v", err)
+		}
 
 		// Используем полученный ID для запроса
 		req, _ = http.NewRequest("GET", "/api/v1/expressions/"+createRes.ID, nil)
@@ -66,7 +70,7 @@ func TestGetExpressionByIDHandler(t *testing.T) {
 			t.Errorf("expected status %v, got %v", http.StatusOK, rr.Code)
 		}
 		var res ExpressionResponse
-		err := json.NewDecoder(rr.Body).Decode(&res)
+		err = json.NewDecoder(rr.Body).Decode(&res)
 		if err != nil {
 			t.Errorf("error decoding response: %v", err)
 		}
@@ -96,7 +100,7 @@ func TestPostTaskResultHandler(t *testing.T) {
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 	var taskRes TaskResponse
-	json.NewDecoder(rr.Body).Decode(&taskRes)
+	_ = json.NewDecoder(rr.Body).Decode(&taskRes)
 
 	// Используем полученный ID для отправки результата
 	reqBody, _ := json.Marshal(TaskResultRequest{ID: taskRes.Task.ID, Result: 4})
