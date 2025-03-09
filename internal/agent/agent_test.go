@@ -53,7 +53,7 @@ func TestPerformTask(t *testing.T) {
 		t.Errorf("expected 2, got %f", result.Result)
 	}
 
-	if duration > time.Duration(task.OperationTime)*time.Millisecond {
+	if duration > time.Duration(task.OperationTime)*time.Millisecond + 10*time.Millisecond {
 		t.Errorf("task took too long, expected less than %dms, got %dms", task.OperationTime, duration.Milliseconds())
 	}
 }

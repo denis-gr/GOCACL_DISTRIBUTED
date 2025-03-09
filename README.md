@@ -4,7 +4,6 @@
 ![Bootstrap](https://img.shields.io/badge/bootstrap-%238511FA.svg?logo=bootstrap&logoColor=white&style=flat)
 ![Go](https://img.shields.io/badge/go-%2300ADD8.svg?&logo=go&logoColor=whitee&style=flat)
 [![Go](https://github.com/denis-gr/GOCACL_DISTRIBUTED/actions/workflows/go.yml/badge.svg)](https://github.com/denis-gr/GOCACL_DISTRIBUTED/actions/workflows/go.yml)
-![Coverage](https://img.shields.io/badge/Coverage-97.2%25-g)
 
 Этот ридми пишет очень уставший Денис, но несмотря на усталость, я буду рад, если тебе понравится мой калькулятор. Если будут какие-то проблемы, то пиши в тг [@denisgrigoriev04](https://t.me/denisgrigoriev04) или в [Issues](https://github.com/denis-gr/GOCACL_DISTRIBUTED/issues). Я ещё написал веб-интерфейс, поэтому если захочешь протестить, то просто запусти его, используя docker compose.
 
