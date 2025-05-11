@@ -62,3 +62,37 @@ type TaskFull struct {
 type TaskFullResponse struct {
 	TasksFull []TaskFull `json:"tasks"`
 }
+
+// ExpressionDB Структура для выражения в базе данных
+type ExpressionDB struct {
+	ID         string  `json:"id"`
+	Expression string  `json:"expression"`
+	Status     string  `json:"status"`
+	Result     float64 `json:"result"`
+	CreatorId  string  `json:"creator_id"`
+}
+
+// UserDB Структура для пользователя в базе данных
+type UserDB struct {
+	ID           string `json:"id"`
+	Username     string `json:"username"`
+	PasswordHash string `json:"password"`
+}
+
+// UserCreateForm Структура для создания пользователя
+type UserCreateForm struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// UserPublic Структура для публичного представления пользователя
+type UserPublic struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+}
+
+// UserLoginForm Структура для входа пользователя
+type UserLoginForm struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}

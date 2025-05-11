@@ -32,19 +32,34 @@
 
 ### Примеры использования API (командная строка Linux)
 
-- Добавление вычисления арифметического выражения:
+- Регистрация пользователя:
   ```sh
-  curl --location 'http://localhost/api/v1/calculate' --header 'Content-Type: application/json' --data '{ "expression": "2+2*2" }'
+  curl --location 'http://localhost/api/v1/register' --header 'Content-Type: application/json' --data '{ "login": "user", "password": "password" }'
   ```
 
-- Получение списка выражений:
+- Вход пользователя, здесь вы получите JWT токен:
   ```sh
-  curl --location 'http://localhost/api/v1/expressions'
+  curl --location 'http://localhost/api/v1/login' --header 'Content-Type: application/json' --data '{ "login": "user", "password": "password" }'
   ```
 
-- Получение выражения по его идентификатору:
+- Добавление вычисления арифметического выражения (требуется аутентификация):
   ```sh
-  curl --location 'http://localhost/api/v1/expressions/:id'
+  curl --location 'http://localhost/api/v1/calculate' \
+  --header 'Content-Type: application/json' \
+  --header 'Authorization: Bearer <JWT_TOKEN>' \
+  --data '{ "expression": "2+2*2" }'
+  ```
+
+- Получение списка выражений (требуется аутентификация):
+  ```sh
+  curl --location 'http://localhost/api/v1/expressions' \
+  --header 'Authorization: Bearer <JWT_TOKEN>'
+  ```
+
+- Получение выражения по его идентификатору (требуется аутентификация):
+  ```sh
+  curl --location 'http://localhost/api/v1/expressions/:id' \
+  --header 'Authorization: Bearer <JWT_TOKEN>'
   ```
 
 ## Архитектура
