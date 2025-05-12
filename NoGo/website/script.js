@@ -21,7 +21,7 @@ function updateInterval() {
 function sendCalculationRequest() {
     const host = document.getElementById('host').value;
     const expression = document.getElementById('expression').value;
-    fetch(`${host}/api/v1/calculate`, {
+    fetch(`${host}/api/v0/calculate`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -37,7 +37,7 @@ function fetchExpressions() {
     const tableBody = document.getElementById('expressionsTable').getElementsByTagName('tbody')[0];
     tableBody.innerHTML = '';
     const host = document.getElementById('host').value;
-    fetch(`${host}/api/v1/expressions`)
+    fetch(`${host}/api/v0/expressions`)
         .then(response => {
             if (response.status === 404) {
                 const row = tableBody.insertRow();
@@ -65,7 +65,7 @@ function fetchTasks() {
     const tableBody = document.getElementById('tasksTable').getElementsByTagName('tbody')[0];
     tableBody.innerHTML = '';
     const host = document.getElementById('host').value;
-    fetch(`${host}/internal/tasks`)
+    fetch(`${host}/api/v0/tasks`)
         .then(response => response.json())
         .then(data => {
             data.tasks.forEach(task => {
@@ -84,7 +84,7 @@ function fetchTasks() {
 function fetchExpressionById() {
     const host = document.getElementById('host').value;
     const id = document.getElementById('expressionId').value;
-    fetch(`${host}/api/v1/expressions/${id}`)
+    fetch(`${host}/api/v0/expressions/${id}`)
         .then(response => response.json())
         .then(data => {
             const details = document.getElementById('expressionDetails');
@@ -99,7 +99,7 @@ function fetchExpressionById() {
 
 function fetchTask() {
     const host = document.getElementById('host').value;
-    fetch(`${host}/internal/task`)
+    fetch(`${host}/api/v0/task`)
         .then(response => response.json())
         .then(data => {
             const details = document.getElementById('taskDetails');
@@ -118,7 +118,7 @@ function sendTaskResult() {
     const host = document.getElementById('host').value;
     const id = document.getElementById('taskId').value;
     const result = document.getElementById('taskResult').value;
-    fetch(`${host}/internal/task`, {
+    fetch(`${host}/api/v0/task`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

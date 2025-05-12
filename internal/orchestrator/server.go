@@ -53,12 +53,17 @@ func NewRouter() http.Handler {
 
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
+
+	router.HandleFunc("/api/v0/calculate", calculateHandlerV0).Methods("POST")
+	router.HandleFunc("/api/v0/expressions", getExpressionsHandlerV0).Methods("GET")
+	router.HandleFunc("/api/v0/expressions/{id}", getExpressionByIDHandlerV0).Methods("GET")
+	router.HandleFunc("/api/v0/task", getTaskHandlerV0).Methods("GET")
+	router.HandleFunc("/api/v0/task", postTaskResultHandlerV0).Methods("POST")
+	router.HandleFunc("/api/v0/tasks", getTasksHandlerV0).Methods("GET")
+
 	router.HandleFunc("/api/v1/calculate", calculateHandler).Methods("POST")
 	router.HandleFunc("/api/v1/expressions", getExpressionsHandler).Methods("GET")
 	router.HandleFunc("/api/v1/expressions/{id}", getExpressionByIDHandler).Methods("GET")
-	router.HandleFunc("/internal/task", getTaskHandler).Methods("GET")
-	router.HandleFunc("/internal/task", postTaskResultHandler).Methods("POST")
-	router.HandleFunc("/internal/tasks", getTasksHandler).Methods("GET")
 	router.HandleFunc("/api/v1/register", registerUserHandler).Methods("POST")
 	router.HandleFunc("/api/v1/login", loginUserHandler).Methods("POST")
 
@@ -240,43 +245,4 @@ func (s *OrchestratorGRPCServer) SendResult(ctx context.Context, in *pb.TaskResu
 		return nil, err
 	}
 	return &pb.Empty{}, nil
-}
-
-// getTaskHandler обрабатывает запрос на получение задачи для выполнения.
-func getTaskHandler(w http.ResponseWriter, _ *http.Request) {
-	res, err := calculator.GetTask()
-	if err == ErrNotFound {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(res)
-	if err != nil {
-		panic(err)
-	}
-}
-
-// postTaskResultHandler обрабатывает запрос на прием результата обработки данных.
-func postTaskResultHandler(w http.ResponseWriter, r *http.Request) {
-	var req TaskResultRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
-		return
-	}
-	err := calculator.PostTaskResult(req)
-	if err == ErrNotFound {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-}
-
-// getTasksHandler обрабатывает запрос на получение всех задач (для демонстрации работы)
-func getTasksHandler(w http.ResponseWriter, _ *http.Request) {
-	res, _ := calculator.GetTasks()
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(res)
-	if err != nil {
-		panic(err)
-	}
 }
