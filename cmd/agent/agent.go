@@ -23,7 +23,7 @@ func main() {
 		url = "localhost:8091"
 	}
 
-	fmt.Printf("Starting %d workers with delay %d ms\n, orchestrator url is %s", computingPower, delayMs, url)
+	fmt.Printf("Starting %d workers with delay %d ms, orchestrator url is %s", computingPower, delayMs, url)
 
 	for i := 0; i < computingPower; i++ {
 		go agent.Worker(delayMs, url)

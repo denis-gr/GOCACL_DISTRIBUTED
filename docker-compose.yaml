@@ -6,7 +6,9 @@ services:
       - .env
     build:
       context: .
-      dockerfile: ./NoGo/docker/orchestrator.dockerfile  
+      dockerfile: ./NoGo/docker/orchestrator.dockerfile
+    volumes:
+      - ./db:/app/db
 
   agent:
     deploy:

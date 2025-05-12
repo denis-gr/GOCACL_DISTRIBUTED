@@ -81,7 +81,7 @@ type UserDB struct {
 
 // UserCreateForm Структура для создания пользователя
 type UserCreateForm struct {
-	Username string `json:"username"`
+	Username string `json:"login"`
 	Password string `json:"password"`
 }
 
@@ -93,6 +93,6 @@ type UserPublic struct {
 
 // UserLoginForm Структура для входа пользователя
 type UserLoginForm struct {
-	Username string `json:"username"`
+	Username string `json:"login"`
 	Password string `json:"password"`
 }

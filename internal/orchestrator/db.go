@@ -187,14 +187,18 @@ func (db *DB) CreateExpression(creatorID string, form CalculateRequest) (Express
 	}
 	idStr := id.String()
 
-	_, err = db.dbConnection.Exec("INSERT INTO expressions (id, expression, status, result, creator_id) VALUES (?, ?, ?, ?, ?)",
-		idStr, form.Expression, "running", 0, creatorID)
+	return db.CreateExpressionWithId(creatorID, idStr, form)
+}
+
+func (db *DB) CreateExpressionWithId(creatorID, expressionId string, form CalculateRequest) (ExpressionDB, error) {
+	_, err := db.dbConnection.Exec("INSERT INTO expressions (id, expression, status, result, creator_id) VALUES (?, ?, ?, ?, ?)",
+		expressionId, form.Expression, "running", 0, creatorID)
 	if err != nil {
 		return ExpressionDB{}, err
 	}
 
 	expression := ExpressionDB{
-		ID:         idStr,
+		ID:         expressionId,
 		Expression: form.Expression,
 		Status:     "running",
 		Result:     0,

@@ -3,6 +3,7 @@ package orchestrator
 
 import (
 	"errors"
+	"log"
 	"os"
 	"strconv"
 	"sync"
@@ -22,7 +23,7 @@ type DistributedCalculator struct {
 	taskBusy    map[string]bool
 	resultChans map[string]chan float64
 	mu          sync.Mutex
-	db 	 *DB
+	db          *DB
 }
 
 // NewDistributedCalculator создает новый экземпляр DistributedCalculator.
@@ -32,7 +33,7 @@ func NewDistributedCalculator(db *DB) *DistributedCalculator {
 		tasks:       make(map[string]Task),
 		taskBusy:    make(map[string]bool),
 		resultChans: make(map[string]chan float64),
-		db: db,
+		db:          db,
 	}
 }
 
@@ -72,6 +73,7 @@ func (f *DistributedCalculator) saveResult(exprID string, res float64, err error
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	expr, exists := f.expressions[exprID]
+
 	if !exists {
 		return
 	}
@@ -82,17 +84,16 @@ func (f *DistributedCalculator) saveResult(exprID string, res float64, err error
 		expr.Result = res
 	}
 	f.expressions[exprID] = expr
-	db.SetResultExpression(exprID, expr.Status, expr.Result)
+	err = db.SetResultExpression(exprID, expr.Status, res)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
-// Calculate выполняет логику для обработки запроса на добавление вычисления арифметического выражения.
-func (f *DistributedCalculator) Calculate(req CalculateRequest) (CalculateResponse, error) {
-	id, _ := uuid.NewV7()
-	idStr := id.String()
-
+func (f *DistributedCalculator) calculate(id, expression string) (CalculateResponse, error) {
 	f.mu.Lock()
-	f.expressions[idStr] = Expression{
-		ID:     idStr,
+	f.expressions[id] = Expression{
+		ID:     id,
 		Status: "running",
 		Result: 0,
 	}
@@ -122,7 +123,7 @@ func (f *DistributedCalculator) Calculate(req CalculateRequest) (CalculateRespon
 	})
 
 	go func() {
-		ans, err := ops.Calc(req.Expression)
+		ans, err := ops.Calc(expression)
 		resultChan <- struct {
 			res float64
 			err error
@@ -131,10 +132,28 @@ func (f *DistributedCalculator) Calculate(req CalculateRequest) (CalculateRespon
 
 	go func() {
 		result := <-resultChan
-		f.saveResult(idStr, result.res, result.err)
+		f.saveResult(id, result.res, result.err)
 	}()
 
-	return CalculateResponse{ID: idStr}, nil
+	return CalculateResponse{ID: id}, nil
+}
+
+// Calculate выполняет логику для обработки запроса на добавление вычисления арифметического выражения.
+func (f *DistributedCalculator) Calculate(req CalculateRequest) (CalculateResponse, error) {
+	id, _ := uuid.NewV7()
+	idStr := id.String()
+	return f.calculate(idStr, req.Expression)
+}
+
+// LoadFromDB загружает данные из базы данных.
+func (f *DistributedCalculator) LoadFromDB() {
+	expressions, err := f.db.GetAllExpressions()
+	if err != nil {
+		panic(err)
+	}
+	for _, expr := range expressions {
+		f.calculate(expr.ID, expr.Expression)
+	}
 }
 
 // GetExpressions выполняет логику для обработки запроса на получение списка выражений.

@@ -18,10 +18,22 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var db, _ = NewDB("db.sqlite3")
-var calculator = NewDistributedCalculator(db)
+var db *DB
+var calculator *DistributedCalculator
+
+func init() {
+	var err error
+	db, err = NewDB("db/db.sqlite3")
+	if err != nil {
+		panic(err)
+	}
+	calculator = NewDistributedCalculator(db)
+	calculator.LoadFromDB()
+}
 
 func StartServer(httpAddr string, grpcAddr string) error {
+	defer db.Close()
+
 	// Запуск gRPC-сервера на отдельном порту
 	grpcServer := grpc.NewServer()
 	pb.RegisterOrchestratorServiceServer(grpcServer, &OrchestratorGRPCServer{})
@@ -188,7 +200,7 @@ func calculateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
-	_, err = db.CreateExpression(user_id, CalculateRequest{Expression: req.Expression})
+	_, err = db.CreateExpressionWithId(user_id, res.ID, CalculateRequest{Expression: req.Expression})
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

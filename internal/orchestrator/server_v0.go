@@ -16,8 +16,13 @@ func calculateHandlerV0(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	res, _ := calculator.Calculate(req)
+	_, err := db.CreateExpressionWithId("", res.ID, CalculateRequest{Expression: req.Expression})
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(res)
+	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		panic(err)
 	}
