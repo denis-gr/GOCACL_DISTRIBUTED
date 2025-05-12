@@ -85,6 +85,16 @@ func registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+func GenerateJWTToken(userID string, username string) (string, error) {
+	jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub":      userID,
+		"username": username,
+		"exp":      jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+	})
+	tokenString, err := jwt.SignedString([]byte("secret"))
+	return tokenString, err
+}
+
 // loginUserHandler обрабатывает запрос на вход пользователя.
 func loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	var req UserLoginForm
@@ -99,17 +109,12 @@ func loginUserHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
-	id, err := db.GetUserByUsername(req.Username)
+	user, err := db.GetUserByUsername(req.Username)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":      id,
-		"username": req.Username,
-		"exp":      jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-	})
-	tokenString, err := jwt.SignedString([]byte("secret"))
+	tokenString, err := GenerateJWTToken(user.ID, req.Username)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -153,8 +158,12 @@ func checkJWTToken(r *http.Request) (string, error) {
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		if claims["exp"] != nil {
-			exp := claims["exp"].(jwt.NumericDate)
-			if time.Now().After(exp.Time) {
+			if expFloat, ok := claims["exp"].(float64); ok {
+				exp := jwt.NumericDate{Time: time.Unix(int64(expFloat), 0)}
+				if time.Now().After(exp.Time) {
+					return "", http.ErrNoCookie
+				}
+			} else {
 				return "", http.ErrNoCookie
 			}
 		}
@@ -174,8 +183,12 @@ func calculateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	res, _ := calculator.Calculate(req)
-	user_id, _ := checkJWTToken(r)
-	_, err := db.CreateExpression(user_id, CalculateRequest{Expression: req.Expression})
+	user_id, err := checkJWTToken(r)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+	_, err = db.CreateExpression(user_id, CalculateRequest{Expression: req.Expression})
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -188,10 +201,15 @@ func calculateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // getExpressionsHandler обрабатывает запрос на получение списка выражений.
-func getExpressionsHandler(w http.ResponseWriter, _ *http.Request) {
+func getExpressionsHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := checkJWTToken(r)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
 	res, _ := calculator.GetExpressions()
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(res)
+	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		panic(err)
 	}
@@ -199,6 +217,11 @@ func getExpressionsHandler(w http.ResponseWriter, _ *http.Request) {
 
 // getExpressionByIDHandler обрабатывает запрос на получение выражения по его идентификатору.
 func getExpressionByIDHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := checkJWTToken(r)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
 	vars := mux.Vars(r)
 	id := vars["id"]
 	res, err := calculator.GetExpressionByID(id)

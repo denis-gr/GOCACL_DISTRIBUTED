@@ -14,6 +14,11 @@ import (
 	"google.golang.org/grpc"
 )
 
+func generateTestToken() string {
+	token, _ := GenerateJWTToken("t", "t")
+	return token
+}
+
 var grpcServer *grpc.Server
 
 func startTestGRPCServer() string {
@@ -46,6 +51,7 @@ func TestCalculateHandler(t *testing.T) {
 	router := NewRouter()
 	reqBody, _ := json.Marshal(CalculateRequest{Expression: "2+2"})
 	req, _ := http.NewRequest("POST", "/api/v1/calculate", bytes.NewBuffer(reqBody))
+	req.Header.Set("Authorization", "Bearer "+generateTestToken())
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 
@@ -65,6 +71,7 @@ func TestCalculateHandler(t *testing.T) {
 func TestGetExpressionsHandler(t *testing.T) {
 	router := NewRouter()
 	req, _ := http.NewRequest("GET", "/api/v1/expressions", nil)
+	req.Header.Set("Authorization", "Bearer "+generateTestToken())
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 
@@ -86,6 +93,7 @@ func TestGetExpressionByIDHandler(t *testing.T) {
 		// Сначала создаем выражение, чтобы получить его ID
 		reqBody, _ := json.Marshal(CalculateRequest{Expression: expr})
 		req, _ := http.NewRequest("POST", "/api/v1/calculate", bytes.NewBuffer(reqBody))
+		req.Header.Set("Authorization", "Bearer "+generateTestToken())
 		rr := httptest.NewRecorder()
 		router.ServeHTTP(rr, req)
 		var createRes CalculateResponse
@@ -96,6 +104,7 @@ func TestGetExpressionByIDHandler(t *testing.T) {
 
 		// Используем полученный ID для запроса
 		req, _ = http.NewRequest("GET", "/api/v1/expressions/"+createRes.ID, nil)
+		req.Header.Set("Authorization", "Bearer "+generateTestToken())
 		rr = httptest.NewRecorder()
 		router.ServeHTTP(rr, req)
 
@@ -156,6 +165,7 @@ func TestPostTaskResultHandler(t *testing.T) {
 func TestCalculateHandlerInvalidRequest(t *testing.T) {
 	router := NewRouter()
 	req, _ := http.NewRequest("POST", "/api/v1/calculate", bytes.NewBuffer([]byte("invalid")))
+	req.Header.Set("Authorization", "Bearer "+generateTestToken())
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 
@@ -257,5 +267,3 @@ func TestLoginUserHandler(t *testing.T) {
 		t.Errorf("expected status %v, got %v", http.StatusUnprocessableEntity, rr.Code)
 	}
 }
-
-

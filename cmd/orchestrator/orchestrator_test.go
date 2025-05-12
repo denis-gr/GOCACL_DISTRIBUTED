@@ -11,6 +11,11 @@ import (
 	"github.com/denis-gr/GOCACL_DISTRIBUTED/internal/orchestrator"
 )
 
+func generateTestToken() string {
+	token, _ := orchestrator.GenerateJWTToken("t", "t")
+	return token
+}
+
 func TestMain(t *testing.T) {
 	os.Setenv("ADDR", ":8081")
 
@@ -19,7 +24,13 @@ func TestMain(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL + "/api/v1/expressions")
+	req, err := http.NewRequest("GET", ts.URL+"/api/v1/expressions", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+generateTestToken())
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("Failed to make GET request: %v", err)
 	}
@@ -37,7 +48,13 @@ func TestMain_NoAddr(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL + "/api/v1/expressions")
+	req, err := http.NewRequest("GET", ts.URL+"/api/v1/expressions", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+generateTestToken())
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("Failed to make GET request: %v", err)
 	}
@@ -60,7 +77,13 @@ func TestServerStart(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	resp, err := http.Get("http://localhost:8180/api/v1/expressions")
+	req, err := http.NewRequest("GET", "http://localhost:8180/api/v1/expressions", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+generateTestToken())
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("Failed to make GET request: %v", err)
 	}
@@ -79,7 +102,13 @@ func TestServerStart_NoAddr(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	resp, err := http.Get("http://localhost:8080/api/v1/expressions")
+	req, err := http.NewRequest("GET", "http://localhost:8080/api/v1/expressions", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+generateTestToken())
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("Failed to make GET request: %v", err)
 	}
