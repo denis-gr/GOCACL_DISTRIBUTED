@@ -48,15 +48,19 @@ func TestMain_NoAddr(t *testing.T) {
 }
 
 func TestServerStart(t *testing.T) {
-	os.Setenv("ADDR", ":8082")
+	httpAddr := ":8180"
+	grpcAddr := ":8191"
 
 	go func() {
-		main()
+		err := orchestrator.StartServer(httpAddr, grpcAddr)
+		if err != nil {
+			t.Fatalf("Failed to start server: %v", err)
+		}
 	}()
 
 	time.Sleep(1 * time.Second)
 
-	resp, err := http.Get("http://localhost:8082/api/v1/expressions")
+	resp, err := http.Get("http://localhost:8180/api/v1/expressions")
 	if err != nil {
 		t.Fatalf("Failed to make GET request: %v", err)
 	}

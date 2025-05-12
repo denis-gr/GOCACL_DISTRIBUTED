@@ -3,7 +3,6 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/denis-gr/GOCACL_DISTRIBUTED/internal/orchestrator"
@@ -11,14 +10,14 @@ import (
 
 func main() {
 	addr := os.Getenv("ADDR")
-
 	if addr == "" {
 		addr = ":8080"
 	}
-
-	router := orchestrator.NewRouter()
-	fmt.Println("Starting server at", addr)
-	err := http.ListenAndServe(addr, router)
+	grpcAddr := os.Getenv("GRPC_ADDR")
+	if grpcAddr == "" {
+		grpcAddr = ":8091"
+	}
+	err := orchestrator.StartServer(addr, grpcAddr)
 	if err != nil {
 		fmt.Println("Error starting server:", err)
 	}

@@ -22,15 +22,17 @@ type DistributedCalculator struct {
 	taskBusy    map[string]bool
 	resultChans map[string]chan float64
 	mu          sync.Mutex
+	db 	 *DB
 }
 
 // NewDistributedCalculator создает новый экземпляр DistributedCalculator.
-func NewDistributedCalculator() *DistributedCalculator {
+func NewDistributedCalculator(db *DB) *DistributedCalculator {
 	return &DistributedCalculator{
 		expressions: make(map[string]Expression),
 		tasks:       make(map[string]Task),
 		taskBusy:    make(map[string]bool),
 		resultChans: make(map[string]chan float64),
+		db: db,
 	}
 }
 
@@ -80,6 +82,7 @@ func (f *DistributedCalculator) saveResult(exprID string, res float64, err error
 		expr.Result = res
 	}
 	f.expressions[exprID] = expr
+	db.SetResultExpression(exprID, expr.Status, expr.Result)
 }
 
 // Calculate выполняет логику для обработки запроса на добавление вычисления арифметического выражения.

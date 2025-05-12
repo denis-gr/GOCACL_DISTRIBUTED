@@ -3,11 +3,44 @@ package orchestrator
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	pb "github.com/denis-gr/GOCACL_DISTRIBUTED/internal/gen"
+	"google.golang.org/grpc"
 )
+
+var grpcServer *grpc.Server
+
+func startTestGRPCServer() string {
+	listener, _ := net.Listen("tcp", ":8081")
+
+	grpcServer = grpc.NewServer()
+	pb.RegisterOrchestratorServiceServer(grpcServer, &OrchestratorGRPCServer{})
+
+	go func() {
+		grpcServer.Serve(listener)
+	}()
+
+	return listener.Addr().String()
+}
+
+func stopTestGRPCServer() {
+	if grpcServer != nil {
+		grpcServer.Stop()
+	}
+}
+
+func TestMain(m *testing.M) {
+	startTestGRPCServer()
+	defer stopTestGRPCServer()
+
+	m.Run()
+}
 
 func TestCalculateHandler(t *testing.T) {
 	router := NewRouter()
@@ -78,54 +111,45 @@ func TestGetExpressionByIDHandler(t *testing.T) {
 }
 
 func TestGetTaskHandler(t *testing.T) {
-	router := NewRouter()
-	req, _ := http.NewRequest("GET", "/internal/task", nil)
-	rr := httptest.NewRecorder()
-	router.ServeHTTP(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("expected status %v, got %v", http.StatusOK, rr.Code)
-	}
-	var res TaskResponse
-	err := json.NewDecoder(rr.Body).Decode(&res)
+	conn, err := grpc.Dial("localhost:8081", grpc.WithInsecure())
 	if err != nil {
-		t.Errorf("error decoding response: %v", err)
+		t.Fatalf("failed to connect to gRPC server: %v", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewOrchestratorServiceClient(conn)
+	res, err := client.GetTask(context.Background(), &pb.Empty{})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if res.Task == nil {
+		t.Errorf("expected a task, got nil")
 	}
 }
 
 func TestPostTaskResultHandler(t *testing.T) {
-	router := NewRouter()
-	// Сначала получаем задачу, чтобы получить ее ID
-	req, _ := http.NewRequest("GET", "/internal/task", nil)
-	rr := httptest.NewRecorder()
-	router.ServeHTTP(rr, req)
-	var taskRes TaskResponse
-	_ = json.NewDecoder(rr.Body).Decode(&taskRes)
-
-	// Используем полученный ID для отправки результата
-	reqBody, _ := json.Marshal(TaskResultRequest{ID: taskRes.Task.ID, Result: 4})
-	req, _ = http.NewRequest("POST", "/internal/task", bytes.NewBuffer(reqBody))
-	rr = httptest.NewRecorder()
-	router.ServeHTTP(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("expected status %v, got %v", http.StatusOK, rr.Code)
-	}
-}
-
-func TestGetTasksHandler(t *testing.T) {
-	router := NewRouter()
-	req, _ := http.NewRequest("GET", "/internal/tasks", nil)
-	rr := httptest.NewRecorder()
-	router.ServeHTTP(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("expected status %v, got %v", http.StatusOK, rr.Code)
-	}
-	var res TaskFullResponse
-	err := json.NewDecoder(rr.Body).Decode(&res)
+	conn, err := grpc.Dial("localhost:8081", grpc.WithInsecure())
 	if err != nil {
-		t.Errorf("error decoding response: %v", err)
+		t.Fatalf("failed to connect to gRPC server: %v", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewOrchestratorServiceClient(conn)
+
+	// Получаем задачу
+	taskRes, err := client.GetTask(context.Background(), &pb.Empty{})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	// Отправляем результат
+	_, err = client.SendResult(context.Background(), &pb.TaskResultRequest{
+		Id:     taskRes.Task.Id,
+		Result: 4,
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
 	}
 }
 
@@ -141,12 +165,97 @@ func TestCalculateHandlerInvalidRequest(t *testing.T) {
 }
 
 func TestPostTaskResultHandlerInvalidRequest(t *testing.T) {
+	conn, err := grpc.Dial("localhost:8081", grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("failed to connect to gRPC server: %v", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewOrchestratorServiceClient(conn)
+
+	// Отправляем некорректный результат
+	_, err = client.SendResult(context.Background(), &pb.TaskResultRequest{
+		Id:     "invalid-id",
+		Result: 4,
+	})
+	if err == nil {
+		t.Fatalf("expected an error, got nil")
+	}
+}
+
+func TestRegisterUserHandler(t *testing.T) {
 	router := NewRouter()
-	req, _ := http.NewRequest("POST", "/internal/task", bytes.NewBuffer([]byte("invalid")))
+
+	// Создаем корректный запрос
+	validUser := UserCreateForm{
+		Username: "testuser123",
+		Password: "password123",
+	}
+	validBody, _ := json.Marshal(validUser)
+	req, _ := http.NewRequest("POST", "/api/v1/register", bytes.NewBuffer(validBody))
+	req.Header.Set("Content-Type", "application/json")
+
 	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Errorf("expected status %v, got %v", http.StatusCreated, rr.Code)
+	}
+
+	// Создаем некорректный запрос
+	invalidBody := []byte("invalid-json")
+	req, _ = http.NewRequest("POST", "/api/v1/register", bytes.NewBuffer(invalidBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	rr = httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Errorf("expected status %v, got %v", http.StatusUnprocessableEntity, rr.Code)
 	}
 }
+
+func TestLoginUserHandler(t *testing.T) {
+	router := NewRouter()
+
+	validUser := UserCreateForm{
+		Username: "testuser",
+		Password: "password123",
+	}
+	validBody, _ := json.Marshal(validUser)
+	req, _ := http.NewRequest("POST", "/api/v1/register", bytes.NewBuffer(validBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	// Создаем корректный запрос
+	validLogin := UserLoginForm{
+		Username: "testuser",
+		Password: "password123",
+	}
+	validBody, _ = json.Marshal(validLogin)
+	req, _ = http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(validBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("expected status %v, got %v", http.StatusOK, rr.Code)
+	}
+
+	// Создаем некорректный запрос
+	invalidBody := []byte("invalid-json")
+	req, _ = http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(invalidBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("expected status %v, got %v", http.StatusUnprocessableEntity, rr.Code)
+	}
+}
+
+

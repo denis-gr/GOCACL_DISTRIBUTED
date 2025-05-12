@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package orchestrator;
+
+option go_package = "internal/orchestrator";
+
+// Task представляет задачу, которую агент должен выполнить.
+message Task {
+  string id = 1; // Уникальный идентификатор задачи
+  string operation = 2; // Операция, например, +, -, *, /
+  double arg1 = 3; // Первый аргумент
+  double arg2 = 4; // Второй аргумент
+  int64 operation_time = 5; // Время выполнения операции в миллисекундах
+}
+
+// TaskResponse представляет ответ с задачей.
+message TaskResponse {
+  Task task = 1; // Задача
+}
+
+// TaskResultRequest представляет результат выполнения задачи.
+message TaskResultRequest {
+  string id = 1; // Уникальный идентификатор задачи
+  double result = 2; // Результат выполнения задачи
+}
+
+// Empty Отсутствие данных
+message Empty {}
+
+// OrchestratorService определяет сервис для взаимодействия с оркестратором.
+service OrchestratorService {
+  // Получить задачу для выполнения.
+  rpc GetTask(Empty) returns (TaskResponse);
+
+  // Отправить результат выполнения задачи.
+  rpc SendResult(TaskResultRequest) returns (Empty);
+}

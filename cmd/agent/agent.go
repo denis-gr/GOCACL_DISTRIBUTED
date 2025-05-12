@@ -20,7 +20,7 @@ func main() {
 	}
 	url := os.Getenv("TASK_URL")
 	if url == "" {
-		url = "http://localhost:8080/internal/task"
+		url = "localhost:8091"
 	}
 
 	fmt.Printf("Starting %d workers with delay %d ms\n, orchestrator url is %s", computingPower, delayMs, url)

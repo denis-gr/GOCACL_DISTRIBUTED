@@ -2,24 +2,34 @@
 package agent
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"time"
 
-	"github.com/denis-gr/GOCACL_DISTRIBUTED/internal/orchestrator"
+	pb "github.com/denis-gr/GOCACL_DISTRIBUTED/internal/gen"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 )
 
 // Worker используется для обозначения ошибки, когда элемент не найден.
-func Worker(delayMs int64, url string) {
+func Worker(delayMs int64, grpcAddress string) {
+	conn, err := grpc.NewClient(grpcAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to gRPC server: %v", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewOrchestratorServiceClient(conn)
+
 	for {
 		nextRun := time.Now().Add(time.Duration(delayMs) * time.Millisecond)
-		task := getTask(url)
+		task := getTask(client)
 		if task != nil {
 			result := performTask(task)
-			err := sendResult(result, url)
+			err := sendResult(client, result)
 			if err != nil {
 				log.Println("Error sending result:", err)
 			}
@@ -28,23 +38,28 @@ func Worker(delayMs int64, url string) {
 	}
 }
 
-func getTask(url string) *orchestrator.Task {
-	resp, err := http.Get(url)
+func getTask(client pb.OrchestratorServiceClient) *pb.Task {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	response, err := client.GetTask(ctx, &pb.Empty{})
 	if err != nil {
+		st, ok := status.FromError(err)
+		if ok {
+			if st.Code() == codes.NotFound {
+				return nil
+			}
+			log.Printf("gRPC error: code = %s, message = %s", st.Code(), st.Message())
+		} else {
+			log.Println("Error getting task:", err)
+		}
 		return nil
 	}
-	defer resp.Body.Close()
 
-	var task orchestrator.TaskResponse
-	err = json.NewDecoder(resp.Body).Decode(&task)
-	if err != nil {
-		return nil
-	}
-
-	return &(task.Task)
+	return response.Task
 }
 
-func performTask(task *orchestrator.Task) *orchestrator.TaskResultRequest {
+func performTask(task *pb.Task) *pb.TaskResultRequest {
 	wait := time.Now().Add(time.Duration(task.OperationTime) * time.Millisecond)
 
 	var result float64
@@ -67,26 +82,19 @@ func performTask(task *orchestrator.Task) *orchestrator.TaskResultRequest {
 
 	time.Sleep(time.Until(wait))
 
-	return &orchestrator.TaskResultRequest{
-		ID:     task.ID,
+	return &pb.TaskResultRequest{
+		Id:     task.Id,
 		Result: result,
 	}
 }
 
-func sendResult(result *orchestrator.TaskResultRequest, url string) error {
-	data, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
+func sendResult(client pb.OrchestratorServiceClient, result *pb.TaskResultRequest) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(data))
+	_, err := client.SendResult(ctx, result)
 	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return fmt.Errorf("error sending result: %w", err)
 	}
 
 	return nil

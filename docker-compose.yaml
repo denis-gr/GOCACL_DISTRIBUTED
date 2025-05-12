@@ -14,7 +14,7 @@ services:
     env_file:
       - .env
     environment:
-      - TASK_URL=http://orchestrator:8080/internal/task
+      - TASK_URL=orchestrator:8081
     depends_on:
       - orchestrator
     build:
