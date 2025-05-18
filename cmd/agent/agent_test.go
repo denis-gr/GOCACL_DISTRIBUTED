@@ -9,7 +9,7 @@ import (
 func TestMain(t *testing.T) {
 	os.Setenv("COMPUTING_POWER", "2")
 	os.Setenv("DELAY_MS", "500")
-	os.Setenv("TASK_URL", "http://localhost:8080/internal/task")
+	os.Setenv("TASK_URL", "localhost:8092")
 
 	go main()
 
@@ -19,7 +19,7 @@ func TestMain(t *testing.T) {
 	if delayMs, err := strconv.ParseInt(os.Getenv("DELAY_MS"), 10, 64); err != nil || delayMs != 500 {
 		t.Errorf("Expected DELAY_MS to be 500, got %d", delayMs)
 	}
-	if url := os.Getenv("TASK_URL"); url != "http://localhost:8080/internal/task" {
-		t.Errorf("Expected TASK_URL to be 'http://localhost:8080/internal/task', got %s", url)
+	if url := os.Getenv("TASK_URL"); url != "localhost:8092" {
+		t.Errorf("Expected TASK_URL to be 'localhost:8092', got %s", url)
 	}
 }

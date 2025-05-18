@@ -22,7 +22,7 @@ func generateTestToken() string {
 var grpcServer *grpc.Server
 
 func startTestGRPCServer() string {
-	listener, _ := net.Listen("tcp", ":8081")
+	listener, _ := net.Listen("tcp", "localhost:8092")
 
 	grpcServer = grpc.NewServer()
 	pb.RegisterOrchestratorServiceServer(grpcServer, &OrchestratorGRPCServer{})
@@ -120,7 +120,7 @@ func TestGetExpressionByIDHandler(t *testing.T) {
 }
 
 func TestGetTaskHandler(t *testing.T) {
-	conn, err := grpc.Dial("localhost:8081", grpc.WithInsecure())
+	conn, err := grpc.Dial("localhost:8092", grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("failed to connect to gRPC server: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestGetTaskHandler(t *testing.T) {
 }
 
 func TestPostTaskResultHandler(t *testing.T) {
-	conn, err := grpc.Dial("localhost:8081", grpc.WithInsecure())
+	conn, err := grpc.Dial("localhost:8092", grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("failed to connect to gRPC server: %v", err)
 	}
@@ -175,7 +175,7 @@ func TestCalculateHandlerInvalidRequest(t *testing.T) {
 }
 
 func TestPostTaskResultHandlerInvalidRequest(t *testing.T) {
-	conn, err := grpc.Dial("localhost:8081", grpc.WithInsecure())
+	conn, err := grpc.Dial("localhost:8092", grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("failed to connect to gRPC server: %v", err)
 	}
@@ -198,7 +198,7 @@ func TestRegisterUserHandler(t *testing.T) {
 
 	// Создаем корректный запрос
 	validUser := UserCreateForm{
-		Username: "testuser123",
+		Username: "testuser173",
 		Password: "password123",
 	}
 	validBody, _ := json.Marshal(validUser)

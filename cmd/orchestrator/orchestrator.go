@@ -11,11 +11,11 @@ import (
 func main() {
 	addr := os.Getenv("ADDR")
 	if addr == "" {
-		addr = ":8080"
+		addr = "localhost:8080"
 	}
 	grpcAddr := os.Getenv("GRPC_ADDR")
 	if grpcAddr == "" {
-		grpcAddr = ":8091"
+		grpcAddr = "localhost:8092"
 	}
 	err := orchestrator.StartServer(addr, grpcAddr)
 	if err != nil {

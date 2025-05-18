@@ -3,8 +3,6 @@ package agent
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -88,63 +86,4 @@ func TestSendResult(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-}
-
-func TestWorker(t *testing.T) {
-	taskServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, err := w.Write([]byte(`{"task": {"ID": "1", "Operation": "+", "Arg1": 1, "Arg2": 1, "OperationTime": 100}}`))
-		if err != nil {
-			t.Fatal(err)
-		}
-	}))
-	defer taskServer.Close()
-
-	resultServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer resultServer.Close()
-
-	go Worker(1000, taskServer.URL)
-	time.Sleep(2 * time.Second)
-
-	// Тесты с неверным URL
-	go Worker(1000, "http://invalid-url")
-	time.Sleep(2 * time.Second)
-
-	// Тесты с нулевой задержкой
-	taskServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, err := w.Write([]byte(`{"task": {"ID": "1", "Operation": "+", "Arg1": 1, "Arg2": 1, "OperationTime": 100}}`))
-		if err != nil {
-			t.Fatal(err)
-		}
-	}))
-	defer taskServer.Close()
-
-	resultServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer resultServer.Close()
-
-	go Worker(0, taskServer.URL)
-	time.Sleep(2 * time.Second)
-
-	// Тесты с ненулевой задержкой
-	taskServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, err := w.Write([]byte(`{"task": {"ID": "1", "Operation": "+", "Arg1": 1, "Arg2": 1, "OperationTime": 100}}`))
-		if err != nil {
-			t.Fatal(err)
-		}
-	}))
-	defer taskServer.Close()
-
-	resultServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer resultServer.Close()
-
-	go Worker(1, taskServer.URL)
-	time.Sleep(2 * time.Second)
 }

@@ -90,6 +90,11 @@ func registerUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := db.CreateUser(req); err != nil {
+		if (err == ErrLongPassword) || (err == ErrLongUsername) ||
+			(err == ErrShortPassword) || (err == ErrShortUsername) {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

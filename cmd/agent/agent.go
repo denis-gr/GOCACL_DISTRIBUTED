@@ -20,10 +20,10 @@ func main() {
 	}
 	url := os.Getenv("TASK_URL")
 	if url == "" {
-		url = "localhost:8091"
+		url = "localhost:8092"
 	}
 
-	fmt.Printf("Starting %d workers with delay %d ms, orchestrator url is %s", computingPower, delayMs, url)
+	fmt.Printf("Starting %d workers with delay %d ms, orchestrator url is %s\n", computingPower, delayMs, url)
 
 	for i := 0; i < computingPower; i++ {
 		go agent.Worker(delayMs, url)

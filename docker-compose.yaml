@@ -16,7 +16,7 @@ services:
     env_file:
       - .env
     environment:
-      - TASK_URL=orchestrator:8081
+      - TASK_URL=orchestrator:8092
     depends_on:
       - orchestrator
     build:

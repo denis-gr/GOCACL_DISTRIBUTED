@@ -3,11 +3,17 @@ package orchestrator
 import (
 	"database/sql"
 	"errors"
+	"os"
 
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var ErrShortPassword = errors.New("password must be at least 8 characters long")
+var ErrShortUsername = errors.New("username must be at least 3 characters long")
+var ErrLongPassword = errors.New("password must be at most 70 characters long")
+var ErrLongUsername = errors.New("username must be at most 20 characters long")
 
 type DB struct {
 	dbConnection *sql.DB
@@ -54,6 +60,20 @@ func createTables(dbConnection *sql.DB) error {
 }
 
 func NewDB(dataSourceName string) (*DB, error) {
+	dir := ""
+	if idx := len(dataSourceName) - 1; idx >= 0 {
+		for i := idx; i >= 0; i-- {
+			if os.IsPathSeparator(dataSourceName[i]) {
+				dir = dataSourceName[:i]
+				break
+			}
+		}
+	}
+	if dir != "" {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, err
+		}
+	}
 	db, err := sql.Open("sqlite3", dataSourceName)
 	if err != nil {
 		return nil, err
@@ -87,19 +107,19 @@ func (db *DB) CreateUser(form UserCreateForm) (*UserPublic, error) {
 	idStr := id.String()
 
 	if len(form.Password) < 8 {
-		return nil, errors.New("password must be at least 8 characters long")
+		return nil, ErrShortPassword
 	}
 
 	if len(form.Password) > 70 {
-		return nil, errors.New("password must be at most 70 characters long")
+		return nil, ErrLongUsername
 	}
 
 	if len(form.Username) < 3 {
-		return nil, errors.New("username must be at least 3 characters long")
+		return nil, ErrShortUsername
 	}
 
 	if len(form.Username) > 20 {
-		return nil, errors.New("username must be at most 20 characters long")
+		return nil, ErrLongUsername
 	}
 
 	passwordHash, err := hashPassword(form.Password)

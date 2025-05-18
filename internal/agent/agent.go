@@ -52,6 +52,7 @@ func getTask(client pb.OrchestratorServiceClient) *pb.Task {
 			log.Printf("gRPC error: code = %s, message = %s", st.Code(), st.Message())
 		} else {
 			log.Println("Error getting task:", err)
+			panic(err)
 		}
 		return nil
 	}
